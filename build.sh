@@ -36,11 +36,7 @@ echo " "
 # Compile source file
 echo "-------------COMPILING-------------"
 sdcc -c ./source/_heap.c -D HEAP_SIZE=8192 --model-large
-sdcc -c ./source/AX25Frame.c --model-large
-sdcc -c ./source/DataFrame.c --model-large
 sdcc -c ./source/Radio.c --model-large
-echo "***   Compiling AX25Frame.c"
-echo "***   Compiling DataFrame.c"
 echo "***   Compiling Radio.c"
 echo "***   Compilation complete"
 echo "-----------------------------------"
@@ -79,68 +75,6 @@ then
 	mv ./Radio.sym $DEBUG_DEST_DIR
 else
 	echo "!!! ERROR !!! Radio.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./AX25Frame.asm" ] 
-then
-	echo "***   MOVING AX25Frame.asm FILE TO SOURCE DIRECTORY"
-	mv ./AX25Frame.asm $DEBUG_DEST_DIR
-else
-	echo "!!! ERROR !!! AX25Frame.asm FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./AX25Frame.lst" ]
-then
-	echo "***   MOVING AX25Frame.lst FILE TO SOURCE DIRECTORY"
-	mv ./AX25Frame.lst $SRC_DIR
-else
-	echo "!!! ERROR !!! AX25Frame.lst FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-if [ -e "./AX25Frame.rel" ]
-then
-	echo "***   MOVING AX25Frame.rel FILE TO SOURCE DIRECTORY"
-	mv ./AX25Frame.rel $SRC_DIR
-else
-	echo "!!! ERROR !!! AX25Frame.rel FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./AX25Frame.sym" ]
-then
-	echo "***   MOVING AX25Frame.sym FILE TO DEBUG DIRECTORY"
-	mv ./AX25Frame.sym $DEBUG_DEST_DIR
-else
-	echo "!!! ERROR !!! AX25Frame.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./DataFrame.asm" ] 
-then
-	echo "***   MOVING DataFrame.asm FILE TO SOURCE DIRECTORY"
-	mv ./DataFrame.asm $DEBUG_DEST_DIR
-else
-	echo "!!! ERROR !!! DataFrame.asm FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./DataFrame.lst" ]
-then
-	echo "***   MOVING DataFrame.lst FILE TO SOURCE DIRECTORY"
-	mv ./DataFrame.lst $SRC_DIR
-else
-	echo "!!! ERROR !!! DataFrame.lst FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-if [ -e "./DataFrame.rel" ]
-then
-	echo "***   MOVING DataFrame.rel FILE TO SOURCE DIRECTORY"
-	mv ./DataFrame.rel $SRC_DIR
-else
-	echo "!!! ERROR !!! DataFrame.rel FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
-fi
-
-if [ -e "./DataFrame.sym" ]
-then
-	echo "***   MOVING DataFrame.sym FILE TO DEBUG DIRECTORY"
-	mv ./DataFrame.sym $DEBUG_DEST_DIR
-else
-	echo "!!! ERROR !!! DataFrame.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
 
 if [ -e "./_heap.asm" ] 
