@@ -37,7 +37,9 @@ echo " "
 echo "-------------COMPILING-------------"
 sdcc -c ./source/_heap.c -D HEAP_SIZE=8192 --model-large
 sdcc -c ./source/Radio.c --model-large
+sdcc -c ./source/uart.c --model-large
 echo "***   Compiling Radio.c"
+echo "***   Compiling uart.c"
 echo "***   Compilation complete"
 echo "-----------------------------------"
 echo " "
@@ -77,6 +79,37 @@ else
 	echo "!!! ERROR !!! Radio.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
 
+if [ -e "./uart.asm" ] 
+then
+	echo "***   MOVING uart.asm FILE TO SOURCE DIRECTORY"
+	mv ./uart.asm $DEBUG_DEST_DIR
+else
+	echo "!!! ERROR !!! uart.asm FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./uart.lst" ]
+then
+	echo "***   MOVING uart.lst FILE TO SOURCE DIRECTORY"
+	mv ./uart.lst $SRC_DIR
+else
+	echo "!!! ERROR !!! uart.lst FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./uart.rel" ]
+then
+	echo "***   MOVING uart.rel FILE TO SOURCE DIRECTORY"
+	mv ./uart.rel $SRC_DIR
+else
+	echo "!!! ERROR !!! uart.rel FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./uart.sym" ]
+then
+	echo "***   MOVING uart.sym FILE TO DEBUG DIRECTORY"
+	mv ./uart.sym $DEBUG_DEST_DIR
+else
+	echo "!!! ERROR !!! uart.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
 if [ -e "./_heap.asm" ] 
 then
 	echo "***   MOVING _heap.asm FILE TO SOURCE DIRECTORY"

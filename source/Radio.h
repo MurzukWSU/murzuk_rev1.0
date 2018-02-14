@@ -4,6 +4,8 @@
 #include "AX25Frame.h"
 #include "DataFrame.h"
 #include "DataTypes.h"
+#include "uart.h"
+#include "dma.h"
 
 //Define RFST constant values
 #define SFSTXON             0x00

@@ -1,10 +1,10 @@
 #include "cc1110.h"
 #include "Radio.h"
+#include "DataTypes.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include <time.h>
 
 void main(void)
 {
@@ -12,6 +12,7 @@ void main(void)
 	initConfigRegisters();
 	initClock();
 	initRFStateMach();
+	
 
 	while(1)
 	{	
