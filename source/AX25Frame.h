@@ -43,28 +43,4 @@ typedef struct AX25_Frame
 	//---END---
 } AX25_Frame;
 
-/********************************************************************************
-*---STRUCT AX25_QUEUE---
-*
-* Description:
-*	Queue for buffering AX25_Frame TX and RX transfers between ground and 
-*	the satellite.
-*
-*********************************************************************************/	
-typedef struct AX25_Queue
-{
-	uint8       head;
-	uint8       tail;
-	uint8       size;
-	uint8       capacity;
-	AX25_Frame* AX25_Frame_Array_List;	
-} AX25_Queue;
-
-//AX25 Queue Operation
-AX25_Queue* create_AX25_Queue   	(uint8 capacity);
-uint8       isFullAX25          	(AX25_Queue* queue);
-uint8       isEmptyAX25         	(AX25_Queue* queue);
-uint8       enqueueAX25         	(AX25_Queue* queue, AX25_Frame* frame);
-AX25_Frame* dequeueAX25         	(AX25_Queue* queue);
-
 #endif

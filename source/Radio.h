@@ -17,12 +17,6 @@ void        initConfigRegisters 	(void);
 void        initClock           	(void);
 void        initRFStateMach     	(void);
 
-//Transmit Operation
-uint8       transmit_AX25_Frame         (AX25_Frame* frame);
-
-//Receive Operation
-AX25_Frame* receive_AX25_Frame          (void);
-
 //Frame Manipulation
 Data_Frame* decomm_AX25_Packet  	(struct AX25_Frame *frame);
 
