@@ -1,7 +1,19 @@
 #include "cc1110.h"
 #include "uart.h"
 
-void uartMapPort (uint8 uartPortAlt, uint8 uartNum)
+/********************************************************************************
+*---FUNCTION---
+* Name: uartMapPort()
+* Description:
+*	Configures the I/O pin mapping for UART transmission in accordance with
+*	the CC1110 datasheet.
+* Parameters:
+*	uint8 uartPortAlt - the port alternative to be used
+*	uint8 uartNum     - the UART channel to be used
+* Returns:
+*	NONE
+*********************************************************************************/	
+void uartMapPort(uint8 uartPortAlt, uint8 uartNum)
 {
 	//If UART Port Alternative 1 desired
 	if(uartPortAlt == 1)

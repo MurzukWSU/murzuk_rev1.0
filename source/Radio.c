@@ -1,10 +1,35 @@
 #include "cc1110.h"
 #include "Radio.h"
 #include "DataTypes.h"
+#include "uart.h"
+#include "dma.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+
+//Allocate DMA descriptor for UART RX/TX in xdata memory space:
+/*
+*  Note that, since the DMA controller only offers one address/reference
+*  register for DMA channels 1-4, the DMA controller expects the
+*  allocated descriptors for DMA channels 2-4 to be located in direct
+*  address succession to the DMA channel 1 descriptor. This is typically
+*  relevant whent he application has already allocated DMA channel 0, and 1,
+*  for other purposes than UART support.
+*/
+struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[2];
+
+//Allocate UART buffers and buffer indices in xdata memory space:
+uint8           	__xdata __at (UART_RX_INDEX_ADDR)    uartRxIndex;
+uint8           	__xdata __at (UART_TX_INDEX_ADDR)    uartTxIndex;
+uint8           	__xdata __at (UART_RX_BUFFER_ADDR)   uartRxBuffer[SIZE_OF_UART_RX_BUFFER];
+uint8           	__xdata __at (UART_TX_BUFFER_ADDR)   uartTxBuffer[SIZE_OF_UART_TX_BUFFER];
+
+//Allocate UART_PROT_CONFIG struct in xdata memory space:
+struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
+
+//---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
+void DMA_ISR(void) __interrupt (1);
 
 void main(void)
 {
@@ -25,7 +50,7 @@ void main(void)
 *---FUNCTION---
 * Name: initConfigRegisters()
 * Description:
-*	Configures the the SoC control registers as imported from SmartRFStudio.
+*	Configures the SoC control registers as imported from SmartRFStudio.
 * Parameters:
 *	NONE
 * Returns:
@@ -186,5 +211,45 @@ Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
 	return dataFrame;	
 }
 
+//This DMA ISR can be used to start a new UART RX session when the previous session
+//(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
+//For simplicity the code assumes that DMA channel 0 is used, but the functionality
+//is the same for other DMA channels
+
+//The code implements the following steps:
+//1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
+//2.  Start a new UART RX session on the applied DMA channel
+//2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
+//2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
+
+
+/********************************************************************************
+*---INTERRUPT SERVICE ROUTINE---
+* Name: DMA_ISR()
+* Description:
+*	This DMA ISR can be used to start a new UART RX session when the previous session
+*	(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
+*	For simplicity the code assumes that DMA channel 0 is used, but the functionality
+*	is the same for other DMA channels
+
+*	The code implements the following steps:
+*	1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
+*	2.  Start a new UART RX session on the applied DMA channel
+*	2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
+*	2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
+*********************************************************************************/	
+void DMA_ISR(void) __interrupt (1)
+{
+	IRCON &= ~0x01;
+
+	if(DMAIRQ & 0x01)
+	{
+		//Here the application could typically perform a quick initial check
+		//of the received data before re-starting another UART RX session
+			
+		DMAIRQ &= ~0x01;
+		DMAARM |= 0x01;
+	}
+}
 
 
