@@ -38,8 +38,10 @@ echo "-------------COMPILING-------------"
 sdcc -c ./source/_heap.c -D HEAP_SIZE=8192 --model-large
 sdcc -c ./source/Radio.c --model-large
 sdcc -c ./source/uart.c --model-large
+sdcc -c ./source/dma.c  --model-large
 echo "***   Compiling Radio.c"
 echo "***   Compiling uart.c"
+echo "***   Compiling dma.c"
 echo "***   Compilation complete"
 echo "-----------------------------------"
 echo " "
@@ -110,6 +112,37 @@ then
 else
 	echo "!!! ERROR !!! uart.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
+if [ -e "./dma.asm" ] 
+then
+	echo "***   MOVING dma.asm FILE TO SOURCE DIRECTORY"
+	mv ./dma.asm $DEBUG_DEST_DIR
+else
+	echo "!!! ERROR !!! dma.asm FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./dma.lst" ]
+then
+	echo "***   MOVING dma.lst FILE TO SOURCE DIRECTORY"
+	mv ./dma.lst $SRC_DIR
+else
+	echo "!!! ERROR !!! dma.lst FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./dma.rel" ]
+then
+	echo "***   MOVING dma.rel FILE TO SOURCE DIRECTORY"
+	mv ./dma.rel $SRC_DIR
+else
+	echo "!!! ERROR !!! dma.rel FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
+if [ -e "./dma.sym" ]
+then
+	echo "***   MOVING dma.sym FILE TO DEBUG DIRECTORY"
+	mv ./dma.sym $DEBUG_DEST_DIR
+else
+	echo "!!! ERROR !!! dma.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
 if [ -e "./_heap.asm" ] 
 then
 	echo "***   MOVING _heap.asm FILE TO SOURCE DIRECTORY"
@@ -146,10 +179,12 @@ echo " "
 
 echo "--------LINKING OBJECT FILES-------"
 # Link object files and generate output hex file
-sdcc ./source/Radio.rel ./source/AX25Frame.rel ./source/DataFrame.rel ./source/_heap.rel --model-large
+sdcc ./source/Radio.rel ./source/AX25Frame.rel ./source/DataFrame.rel ./source/_heap.rel ./source/uart.rel ./source/dma.rel --model-large
 echo "*** Linking Radio.rel"
 echo "*** Linking AX25Frame.rel"
 echo "*** Linking DataFrame.rel"
+echo "*** Linking uart.rel"
+echo "*** Linking dma.rel"
 echo "*** Linking complete"
 echo "-----------------------------------"
 echo " "
