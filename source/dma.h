@@ -35,11 +35,23 @@ typedef struct DMA_DESC
 } DMA_DESC;
 
 //---FUNCTION PROTOTYPES---
-void uartStartRxDmaChan(uint8     uartNum,
-		        DMA_DESC* uartDmaRxDescr,
-		        uint8     uartDmaRxChan,
-			uint8*    uartRxBuf,
-			uint16    uartRxBufSize);
+void uartStartRxDmaChan
+(
+	uint8 uartNum,
+	DMA_DESC* uartDmaRxDescr,
+	uint8 uartDmaRxChan,
+	uint8* uartRxBuf,
+	uint16 uartRxBufSize
+);
+
+void uartStartTxDmaChan
+(
+	unsigned char uartNum,
+	DMA_DESC *uartDmaTxDescr,
+	unsigned char uartDmaTxChan,
+	unsigned char* uartTxBuf,
+	unsigned shortuartTxBufSize
+);
 
 
 #endif

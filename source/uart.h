@@ -31,11 +31,13 @@ typedef struct UART_PROT_CONFIG
 	uint8 FLOW	: 1;
 	uint8 ORDER	: 1;
 
-} UART_PORT_CONFIG;
+} UART_PROT_CONFIG;
 
 
 
 //---FUNCTION PROTOTYPES---
 void uartMapPort (uint8 uartPortAlt, uint8 uartNum);
+void uartInitBitrate(uint8 uartBaudM, uint8 uartBaudE);
+void uartInitProtocol(UART_PROT_CONFIG* uartProtConfig);
 
 #endif
