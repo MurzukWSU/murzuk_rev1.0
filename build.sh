@@ -179,10 +179,8 @@ echo " "
 
 echo "--------LINKING OBJECT FILES-------"
 # Link object files and generate output hex file
-sdcc ./source/Radio.rel ./source/AX25Frame.rel ./source/DataFrame.rel ./source/_heap.rel ./source/uart.rel ./source/dma.rel --model-large
+sdcc ./source/Radio.rel ./source/_heap.rel ./source/uart.rel ./source/dma.rel --model-large
 echo "*** Linking Radio.rel"
-echo "*** Linking AX25Frame.rel"
-echo "*** Linking DataFrame.rel"
 echo "*** Linking uart.rel"
 echo "*** Linking dma.rel"
 echo "*** Linking complete"
