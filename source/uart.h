@@ -4,11 +4,11 @@
 #include "cc1110.h"
 #include "DataTypes.h"
 
-#define SIZE_OF_UART_RX_BUFFER 282
-#define SIZE_OF_UART_TX_BUFFER 282
+#define SIZE_OF_UART_RX_BUFFER 275
+#define SIZE_OF_UART_TX_BUFFER 275
 #define UART_RX_BUFFER_ADDR    0xF000
 #define UART_TX_BUFFER_ADDR    UART_RX_BUFFER_ADDR + SIZE_OF_UART_RX_BUFFER
-#define UART_RX_INDEX_ADDR     UART_TX_BUFFER_ADDR + 1
+#define UART_RX_INDEX_ADDR     UART_TX_BUFFER_ADDR + SIZE_OF_UART_TX_BUFFER
 #define UART_TX_INDEX_ADDR     UART_RX_INDEX_ADDR  + 1
 
 /********************************************************************************
