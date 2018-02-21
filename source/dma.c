@@ -185,3 +185,98 @@ void uartStartTxDmaChan
 	// the defined range of transfers, the CPU vectors its execution to 
 	// the DMA ISR in Figure 23. 
 }
+
+/********************************************************************************
+*---FUNCTION---
+* Name: uartStartTxDmaChan()
+* Description:
+*	This function sets up a designated DMA channel for rfd TX and starts
+*	the rfd TX session. Before this function is called the application must
+*	perform initialization by executing the code in Figure 3 (rfdMapPort()),
+*	Figure 11 (rfdInitBitrate()), Figure 12 (rfd buffer allocation),
+*	and Figure 13 (rfdInitProtocol())
+*	See DN112 design note from ti for more details.
+*
+* Parameters:
+*	unsigned char rfdNum - determines whether UART0 or UART1 is used
+*	DMA_DESC *rfdDmaTxDescr - pointer to a struct containing DMA parameters
+*	unsigned char rfdDmaTxChan - gives DMA channel for Tx
+*	unsigned char* rfdTxBuf - pointer to buffer
+*	unsigned shortrfdTxBufSize - buffer size
+* Returns:
+*	NONE
+*********************************************************************************/
+void rfdStartTxDmaChan
+(
+	unsigned char rfdNum,
+	DMA_DESC *rfdDmaTxDescr,
+	unsigned char rfdDmaTxChan,
+	unsigned char* rfdTxBuf,
+	unsigned shortrfdTxBufSize
+)
+{
+	// Source = allocated UART TX buffer, destination = UxDBUF 
+	// Number of DMA byte transfers = UART TX buffer size. 
+	rfdDmaTxDescr->SRCADDRH = (unsigned short)(rfdTxBuf + 1) >> 8;
+	rfdDmaTxDescr->SRCADDRL = (unsigned short)(rfdTxBuf + 1);
+	rfdDmaTxDescr->DESTADDRH = 0xDF;
+	rfdDmaTxDescr->DESTADDRL = (uartNum == 0) ? 0xC1 : 0xF9;
+	rfdDmaTxDescr->LENH = ((shortrfdTxBufSize - 1) >> 8) & 0xFF;
+	rfdDmaTxDescr->LENL = (shortrfdTxBufSize - 1) & 0xFF;
+	rfdDmaTxDescr->VLEN = 0x00;
+	// Use fixed length DMA transfer count
+	rfdDmaTxDescr->WORDSIZE = 0x00;
+	// Perfrom 1-byte DMA transfers
+	rfdDmaTxDescr->TMODE = 0x00;  // Single byte transfer per DMA trigger
+	rfdDmaTxDescr->TRIG = 15 + (2 * rfdNum);
+	// DMA trigger = USARTx TX complete
+	rfdDmaTxDescr->SRCINC = 0x01;
+	// Increment source pointer by 1 byte
+	// address after each transfer.
+	rfdDmaTxDescr->DESTINC = 0x00;
+	// Do not increment destination pointer:
+	// points to USART UxDBUF register.
+	rfdDmaTxDescr->IRQMASK = 0x01;
+	// Enable DMA interrupt to the CPU
+	rfdDmaTxDescr->M8 = 0x00;
+	// Use all 8 bits for transfer count
+	rfdDmaTxDescr->PRIORITY = 0x00;
+	// DMA memory access has low priority
+	// Link DMA descriptor with its corresponding DMA configuration register. 
+	if (rfdDmaTxChan <1)
+	{
+		DMA0CFGH = (unsigned char)((unsigned short)rfdDmaTxDescr >> 8);
+		DMA0CFGL = (unsigned char)((unsigned short)rfdDmaTxDescr & 0x00FF);
+	}
+	else
+	{
+		DMA1CFGH = (unsigned char)((unsigned short)rfdDmaTxDescr >> 8);
+		DMA1CFGL = (unsigned char)((unsigned short)rfdDmaTxDescr & 0x00FF);
+	}
+	// Arm DMA channel and apply 45 NOP's for loading DMA configuration 
+	DMAARM = ((1 << rfdDmaTxChan) & 0x1F);
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	__asm__("NOP"); __asm__("NOP"); __asm__("NOP");
+	// Enable the DMA interrupt (IEN1.DMAIE = IEN0.EA = 1), 
+	// and clear potential pending DMA interrupt requests (IRCON.DMAIF = 0). 
+	IEN0 |= 0x80; IEN1 |= 0x01; IRCON &= ~0x01;
+	// Send the very first UART byte to trigger a UART TX session: 
+	if (rfdNum == 0)
+	{
+		U0DBUF = rfdTxBuf[0];
+	}
+	else
+	{
+		U1DBUF = rfdTxBuf[0];
+	}
+	// At this point the UART generates a DMA trigger each time it has 
+	// transmitted a byte, leading to a DMA transfer from the allocated 
+	// TX source buffer to UxDBUF. Once the DMA controller has completed 
+	// the defined range of transfers, the CPU vectors its execution to 
+	// the DMA ISR in Figure 23. 
+}
