@@ -29,7 +29,8 @@ uint8           	__xdata __at (UART_TX_BUFFER_ADDR)   uartTxBuffer[SIZE_OF_UART_
 struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
 
 //---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
-void DMA_ISR(void) __interrupt (1);
+void DMA_ISR_RX(void) __interrupt (1);
+void DMA_ISR_TX(void) __interrupt (2);
 
 void main(void)
 {
@@ -211,21 +212,9 @@ Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
 	return dataFrame;	
 }
 
-//This DMA ISR can be used to start a new UART RX session when the previous session
-//(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
-//For simplicity the code assumes that DMA channel 0 is used, but the functionality
-//is the same for other DMA channels
-
-//The code implements the following steps:
-//1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
-//2.  Start a new UART RX session on the applied DMA channel
-//2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
-//2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
-
-
 /********************************************************************************
 *---INTERRUPT SERVICE ROUTINE---
-* Name: DMA_ISR()
+* Name: DMA_ISR_RX()
 * Description:
 *	This DMA ISR can be used to start a new UART RX session when the previous session
 *	(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
@@ -238,7 +227,7 @@ Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
 *	2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
 *	2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
 *********************************************************************************/	
-void DMA_ISR(void) __interrupt (1)
+void DMA_ISR_RX(void) __interrupt (1)
 {
 	IRCON &= ~0x01;
 
@@ -252,4 +241,42 @@ void DMA_ISR(void) __interrupt (1)
 	}
 }
 
+/********************************************************************************
+*---INTERRUPT SERVICE ROUTINE---
+* Name: DMA_ISR_TX()
+* Description:
+*	This DMA ISR can be used to start a new UART TX session when the previous session
+*	(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
+*	For simplicity the code assumes that DMA channel 0 is used, but the functionality
+*	is the same for other DMA channels
 
+*	The code implements the following steps:
+*	1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
+*	2.  Start a new UART TX session on the applied DMA channel
+*	2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
+*	2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
+*	2c. Send the very first UART TX byte to trigger a new UART TX session.
+*********************************************************************************/
+void DMA_ISR_TX(void) __interrupt (2)
+{
+	IRCON &= ~0x01;
+	if(DMAIRQ &0x02) 
+	{
+		DMAIRQ &= ~0x02;
+		// Here the application could typically perform a quick preparation of 
+		// the allocated UART TX source buffer before starting another UART TX 
+		// session. 
+		// Recommendation: 
+		// Introduce delay here to allow receiver processing between DMA packets. 
+		// The applied delay should then be tuned according to UART data rate. 
+		DMAARM |=0x02;
+		if(uartProtConfig.uartNum ==0) 
+		{
+			U0DBUF = uartTxBuffer[0];
+		}
+		else
+		{
+			U1DBUF = uartTxBuffer[0];
+		}
+	}
+}
