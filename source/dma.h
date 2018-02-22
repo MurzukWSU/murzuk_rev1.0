@@ -5,7 +5,13 @@
 #include "DataTypes.h"
 #include "uart.h"
 
-#define DMA_DESCRS_ADDR UART_TX_INDEX_ADDR + 1 
+//Define RFST constant values
+#define SFSTXON               0x00
+#define SCAL                  0x01
+#define SRX                   0x02
+#define STX                   0x03
+#define SIDLE                 0x04
+#define DMA_DESCRS_ADDR	      0xF600 
 
 /********************************************************************************
 *---STRUCT DMA_DESC---
@@ -46,12 +52,19 @@ void uartStartRxDmaChan
 
 void uartStartTxDmaChan
 (
-	unsigned char uartNum,
+	uint8 uartNum,
 	DMA_DESC *uartDmaTxDescr,
-	unsigned char uartDmaTxChan,
-	unsigned char* uartTxBuf,
-	unsigned shortuartTxBufSize
+	uint8 uartDmaTxChan,
+	uint8* uartTxBuf,
+	uint16 uartTxBufSize
 );
 
+void rfdStartRxDmaChan
+(
+	DMA_DESC* rfdDmaRxDescr,
+	uint8 rfdDmaRxChan,
+	uint8* rfdRxBuf,
+	uint16 rfdRxBufSize
+);
 
 #endif

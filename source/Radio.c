@@ -17,7 +17,7 @@
 *  relevant whent he application has already allocated DMA channel 0, and 1,
 *  for other purposes than UART support.
 */
-struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[2];
+struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[4];
 
 //Allocate UART buffers and buffer indices in xdata memory space:
 uint8           	__xdata __at (UART_RX_INDEX_ADDR)    uartRxIndex;
@@ -25,11 +25,18 @@ uint8           	__xdata __at (UART_TX_INDEX_ADDR)    uartTxIndex;
 uint8           	__xdata __at (UART_RX_BUFFER_ADDR)   uartRxBuffer[SIZE_OF_UART_RX_BUFFER];
 uint8           	__xdata __at (UART_TX_BUFFER_ADDR)   uartTxBuffer[SIZE_OF_UART_TX_BUFFER];
 
+//Allocate RFD buffers and buffer indices in xdata memory space:
+uint8			__xdata __at (RFD_RX_INDEX_ADDR)     rfdRxIndex;
+uint8			__xdata __at (RFD_TX_INDEX_ADDR)     rfdTxIndex;
+uint8           	__xdata __at (RFD_RX_BUFFER_ADDR)    rfdRxBuffer[SIZE_OF_RFD_RX_BUFFER];
+uint8           	__xdata __at (RFD_TX_BUFFER_ADDR)    rfdTxBuffer[SIZE_OF_RFD_TX_BUFFER];
+
 //Allocate UART_PROT_CONFIG struct in xdata memory space:
 struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
 
 //---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
-void DMA_ISR(void) __interrupt (1);
+void DMA_ISR (void) __interrupt (8);
+//void DMA_RFD_RX_ISR  (void) __interrupt (8);
 
 void main(void)
 {
@@ -79,7 +86,7 @@ void initConfigRegisters(void)
 	TEST0     = 0x09; //Various test settings
 	PA_TABLE0 = 0x60; //PA power setting 0
 	IOCFG0    = 0x06; //Radio test signal configuration (P1_5)
-	PKTLEN    = 2;	  //Packet length
+	PKTLEN    = 255;  //Packet length
 
 }
 
@@ -227,28 +234,42 @@ Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
 *---INTERRUPT SERVICE ROUTINE---
 * Name: DMA_ISR()
 * Description:
-*	This DMA ISR can be used to start a new UART RX session when the previous session
-*	(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
-*	For simplicity the code assumes that DMA channel 0 is used, but the functionality
-*	is the same for other DMA channels
-
-*	The code implements the following steps:
-*	1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
-*	2.  Start a new UART RX session on the applied DMA channel
-*	2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
-*	2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
+*	This ISR clears the DMAIRQ flag for the channel which completed its
+*	transfer and generated the interrupted request.
 *********************************************************************************/	
-void DMA_ISR(void) __interrupt (1)
+void DMA_ISR(void) __interrupt (8)
 {
+	//Clear CPU DMA interrupt flag
 	IRCON &= ~0x01;
 
+	//Clear DMA Channel 0 complete interrupt flag
 	if(DMAIRQ & 0x01)
 	{
-		//Here the application could typically perform a quick initial check
-		//of the received data before re-starting another UART RX session
-			
 		DMAIRQ &= ~0x01;
-		DMAARM |= 0x01;
+	}
+
+	//Clear DMA Channel 1 complete interrupt flag
+	if(DMAIRQ & 0x02)
+	{
+		DMAIRQ &= ~0x02;
+	}
+	
+	//Clear DMA Channel 2 complete interrupt flag
+	if(DMAIRQ & 0x04)
+	{
+		DMAIRQ &= ~0x04;
+	}
+	
+	//Clear DMA Channel 3 complete interrupt flag
+	if(DMAIRQ & 0x08)
+	{
+		DMAIRQ &= ~0x08;
+	}
+
+	//Clear DMA Channel 4 complete interrupt flag
+	if(DMAIRQ & 0x10)
+	{
+		DMAIRQ &= ~0x10;
 	}
 }
 
