@@ -12,11 +12,11 @@
 *********************************************************************************/	
 typedef struct Data_Frame
 {
-	uint8 data[251];  
+	uint8 data[232];  
 	uint8 dest_Addr[7];
 	uint8 src_Addr[7];
 	uint8 master_Frame_Count;
 	uint8 vc_Frame_Count;
-	uint8 time_Stamp[8];	
+	uint8 time_Stamp[4];	
 } Data_Frame;
 #endif
