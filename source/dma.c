@@ -231,8 +231,8 @@ void rfdStartRxDmaChan
 	rfdDmaRxDescr->PRIORITY  = 0x02;	       //DMA memory access has low priority
 
 	//Link DMA descriptor with its corresponding DMA configuration register
-	DMA0CFGH = (uint8) ((uint16) rfdDmaRxDescr >> 8);
-	DMA0CFGL = (uint8) ((uint16) rfdDmaRxDescr & 0x00FF);
+	DMA1CFGH = (uint8) ((uint16) rfdDmaRxDescr >> 8);
+	DMA1CFGL = (uint8) ((uint16) rfdDmaRxDescr & 0x00FF);
 
 	//Arm DMA channel and apply 45 NOP's for loading DMA configuration
 	DMAARM = ((1 << rfdDmaRxChan) & 0x1F);
