@@ -2,7 +2,7 @@
 #define RADIO_H
 
 #include "cc1110.h"
-#include "AX25Frame.h"
+#include "RadioFrame.h"
 #include "DataFrame.h"
 #include "DataTypes.h"
 #include "uart.h"
@@ -29,9 +29,9 @@ void        initClock           	(void);
 void        initRFStateMach     	(void);
 
 //Frame Manipulation
-Data_Frame* decomm_AX25_Packet  	(struct AX25_Frame *frame);
+Data_Frame* decomm_AX25_Packet  	(struct Radio_Frame *frame);
 
 //Helper Functions For AX25 Frame Construction
-AX25_Frame* construct_AX25_Packet       (Data_Frame* frame);
+Radio_Frame* construct_AX25_Packet       (Data_Frame* frame);
 
 #endif
