@@ -38,7 +38,6 @@ struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
 
 //---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
 void DMA_ISR (void) __interrupt (8);
-//void DMA_RFD_RX_ISR  (void) __interrupt (8);
 
 void main(void)
 {
@@ -259,5 +258,3 @@ void DMA_ISR(void) __interrupt (8)
 		DMAIRQ &= ~0x10;
 	}
 }
-
-
