@@ -3,6 +3,8 @@
 #include "DataTypes.h"
 #include "uart.h"
 #include "dma.h"
+#include "RadioFrame.h"
+#include "DataFrame.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -17,7 +19,7 @@
 *  relevant whent he application has already allocated DMA channel 0, and 1,
 *  for other purposes than UART support.
 */
-struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[2];
+struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[4];
 
 //Allocate UART buffers and buffer indices in xdata memory space:
 uint8           	__xdata __at (UART_RX_INDEX_ADDR)    uartRxIndex;
@@ -25,10 +27,17 @@ uint8           	__xdata __at (UART_TX_INDEX_ADDR)    uartTxIndex;
 uint8           	__xdata __at (UART_RX_BUFFER_ADDR)   uartRxBuffer[SIZE_OF_UART_RX_BUFFER];
 uint8           	__xdata __at (UART_TX_BUFFER_ADDR)   uartTxBuffer[SIZE_OF_UART_TX_BUFFER];
 
+//Allocate RFD buffers and buffer indices in xdata memory space:
+uint8			__xdata __at (RFD_RX_INDEX_ADDR)     rfdRxIndex;
+uint8			__xdata __at (RFD_TX_INDEX_ADDR)     rfdTxIndex;
+uint8           	__xdata __at (RFD_RX_BUFFER_ADDR)    rfdRxBuffer[SIZE_OF_RFD_RX_BUFFER];
+uint8           	__xdata __at (RFD_TX_BUFFER_ADDR)    rfdTxBuffer[SIZE_OF_RFD_TX_BUFFER];
+
 //Allocate UART_PROT_CONFIG struct in xdata memory space:
 struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
 
 //---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
+void DMA_ISR (void) __interrupt (8);
 
 void main(void)
 {
@@ -78,7 +87,7 @@ void initConfigRegisters(void)
 	TEST0     = 0x09; //Various test settings
 	PA_TABLE0 = 0x60; //PA power setting 0
 	IOCFG0    = 0x06; //Radio test signal configuration (P1_5)
-	PKTLEN    = 2;	  //Packet length
+	PKTLEN    = 255;  //Packet length
 
 }
 
@@ -127,63 +136,48 @@ void initRFStateMach(void)
 
 /********************************************************************************
 *---FUNCTION---
-* Name: construct_AX25_Packet()
+* Name: construct_Radio_Packet()
 * Description:
-*	Constructs an AX25_Frame to be transmitted.
+*	Constructs an Radio_Frame to be transmitted.
 * Parameters:
 *	Data_Frame* frame
 * Returns:
-*	AX25_Frame* - Pointer to the constructed AX25_Frame
+*	Radio_Frame* - Pointer to the constructed AX25_Frame
 *********************************************************************************/
-AX25_Frame* construct_AX25_Packet(Data_Frame* frame)
+Radio_Frame* construct_Radio_Packet(Data_Frame* frame)
 {
-	uint8 ts_Ind = 0;
 	//Allocate memory for new AX25_Frame
-	AX25_Frame* new_Frame_Ptr           = (AX25_Frame *)malloc(sizeof(AX25_Frame));
-	
-	//Set the frame start byte
-	new_Frame_Ptr->frame_Start          = AX25_FRAME_START;
+	Radio_Frame* new_Frame_Ptr           = (Radio_Frame *)malloc(sizeof(Radio_Frame));
 	
 	//Copy the source and destination addresses from the Data_Frame
 	memcpy(new_Frame_Ptr->src_Addr, frame->src_Addr, sizeof(frame->src_Addr));
 	memcpy(new_Frame_Ptr->dest_Addr, frame->dest_Addr, sizeof(frame->dest_Addr));
 
-	//Set control, protocol ident., and frame ID bytes
-	new_Frame_Ptr->control              = AX25_CONTROL;
-	new_Frame_Ptr->proto_Ident          = AX25_PROTO_IDENT;
-	new_Frame_Ptr->frame_ID             = AX25_FRAME_ID;
 
 	//Set the frame count bytes and first header pointer byte
 	new_Frame_Ptr->master_Frame_Count   = frame->master_Frame_Count;
 	new_Frame_Ptr->vc_Frame_Count       = frame->vc_Frame_Count;
-	new_Frame_Ptr->first_Header_Pointer = AX25_1ST_HEADER_PTR;
 	
 	//Copy the data field from the Data_Frame
 	memcpy(new_Frame_Ptr->data, frame->data, sizeof(frame->data));
-	
-	//Set the frame status byte
-	new_Frame_Ptr->frame_Status         = 0xF0;
 
 	//Copy the time stamp bytes from the Data_Frame
 	memcpy(new_Frame_Ptr->time_Stamp, frame->time_Stamp, sizeof(frame->time_Stamp));	
-
-	//Set the frame end byte
-	new_Frame_Ptr->frame_End            = AX25_FRAME_END;
 
 	return new_Frame_Ptr;
 }
 
 /********************************************************************************
 *---FUNCTION---
-* Name: decomm_AX25_Packet()
+* Name: decomm_Radio_Packet()
 * Description:
-*	Extracts the data field from an AX25 packet and other pertinent fields.
+*	Extracts the data field from an Radio packet and other pertinent fields.
 * Parameters:
-*	AX25_Frame* - pointer to the frame to be decommutated
+*	Radio_Frame* - pointer to the frame to be decommutated
 * Returns:
-*	Data_Frame* - data field (and other fields) from the AX25 frame
+*	Data_Frame* - data field (and other fields) from the Radio frame
 *********************************************************************************/	
-Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
+Data_Frame* decomm_Radio_Packet(Radio_Frame *frame)
 {
 	//Extract data bits from AX25 Packet
 	Data_Frame* dataFrame = (Data_Frame *) malloc (sizeof(Data_Frame));
@@ -202,10 +196,65 @@ Data_Frame* decomm_AX25_Packet(AX25_Frame *frame)
 	dataFrame->vc_Frame_Count = frame->vc_Frame_Count;	
 
 	//Copy time stamp information from AX25_Frame to Data_Frame
-	memcpy(dataFrame->time_Stamp, frame->time_Stamp, sizeof(uint8) * 8);	
+	memcpy(dataFrame->time_Stamp, frame->time_Stamp, sizeof(frame->time_Stamp));	
 	
 	//Decomm'd AX25_Frame is no longer needed so free the memory
 	free(frame);
 
 	return dataFrame;	
+}
+
+//This DMA ISR can be used to start a new UART RX session when the previous session
+//(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
+//For simplicity the code assumes that DMA channel 0 is used, but the functionality
+//is the same for other DMA channels
+
+//The code implements the following steps:
+//1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
+//2.  Start a new UART RX session on the applied DMA channel
+//2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
+//2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
+
+
+/********************************************************************************
+*---INTERRUPT SERVICE ROUTINE---
+* Name: DMA_ISR()
+* Description:
+*	This ISR clears the DMAIRQ flag for the channel which completed its
+*	transfer and generated the interrupted request.
+*********************************************************************************/	
+void DMA_ISR(void) __interrupt (8)
+{
+	//Clear CPU DMA interrupt flag
+	IRCON &= ~0x01;
+
+	//Clear DMA Channel 0 complete interrupt flag
+	if(DMAIRQ & 0x01)
+	{
+		DMAIRQ &= ~0x01;
+	}
+
+	//Clear DMA Channel 1 complete interrupt flag
+	if(DMAIRQ & 0x02)
+	{
+		DMAIRQ &= ~0x02;
+	}
+	
+	//Clear DMA Channel 2 complete interrupt flag
+	if(DMAIRQ & 0x04)
+	{
+		DMAIRQ &= ~0x04;
+	}
+	
+	//Clear DMA Channel 3 complete interrupt flag
+	if(DMAIRQ & 0x08)
+	{
+		DMAIRQ &= ~0x08;
+	}
+
+	//Clear DMA Channel 4 complete interrupt flag
+	if(DMAIRQ & 0x10)
+	{
+		DMAIRQ &= ~0x10;
+	}
 }
