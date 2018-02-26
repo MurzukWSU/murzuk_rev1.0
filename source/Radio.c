@@ -1,4 +1,5 @@
 #include "cc1110.h"
+#include "ioCCxx10_bitdef.h"
 #include "Radio.h"
 #include "DataTypes.h"
 #include "uart.h"
@@ -10,46 +11,69 @@
 #include <string.h>
 #include <stdlib.h>
 
-//Allocate DMA descriptor for UART RX/TX in xdata memory space:
-/*
-*  Note that, since the DMA controller only offers one address/reference
-*  register for DMA channels 1-4, the DMA controller expects the
-*  allocated descriptors for DMA channels 2-4 to be located in direct
-*  address succession to the DMA channel 1 descriptor. This is typically
-*  relevant whent he application has already allocated DMA channel 0, and 1,
-*  for other purposes than UART support.
-*/
-struct DMA_DESC 	__xdata __at (DMA_DESCRS_ADDR)       uartDmaRxTxCh[4];
-
-//Allocate UART buffers and buffer indices in xdata memory space:
-uint8           	__xdata __at (UART_RX_INDEX_ADDR)    uartRxIndex;
-uint8           	__xdata __at (UART_TX_INDEX_ADDR)    uartTxIndex;
-uint8           	__xdata __at (UART_RX_BUFFER_ADDR)   uartRxBuffer[SIZE_OF_UART_RX_BUFFER];
-uint8           	__xdata __at (UART_TX_BUFFER_ADDR)   uartTxBuffer[SIZE_OF_UART_TX_BUFFER];
-
-//Allocate RFD buffers and buffer indices in xdata memory space:
-uint8			__xdata __at (RFD_RX_INDEX_ADDR)     rfdRxIndex;
-uint8			__xdata __at (RFD_TX_INDEX_ADDR)     rfdTxIndex;
-uint8           	__xdata __at (RFD_RX_BUFFER_ADDR)    rfdRxBuffer[SIZE_OF_RFD_RX_BUFFER];
-uint8           	__xdata __at (RFD_TX_BUFFER_ADDR)    rfdTxBuffer[SIZE_OF_RFD_TX_BUFFER];
-
-//Allocate UART_PROT_CONFIG struct in xdata memory space:
-struct UART_PROT_CONFIG __xdata __at (UART_PROT_CONFIG_ADDR) uartProtConfig;
-
 //---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
-void DMA_ISR (void) __interrupt (8);
+//void DMA_ISR (void) __interrupt (8);
 
 void main(void)
 {
-	//Call Initialization functions
-	initConfigRegisters();
-	initClock();
-	initRFStateMach();
+	uint8 index = 0;
+ 	PERCFG = (PERCFG & ~PERCFG_U0CFG) | PERCFG_U1CFG;
+  	// P0SEL.SELP0_2/3/4/5 = 1 => RX = P0_2, TX = P0_3, CT = P0_4, RT = P0_5
+  	P0SEL |= 0x20 | 0x10 | 0x08 | 0x04;
 	
+	//Configure clock
+	SLEEP &= ~SLEEP_OSC_PD;
+  	while( !(SLEEP & SLEEP_XOSC_S) );
+  	CLKCON = (CLKCON & ~(CLKCON_CLKSPD | CLKCON_OSC)) | CLKSPD_DIV_1;
+  	while (CLKCON & CLKCON_OSC);
+  	SLEEP |= SLEEP_OSC_PD;
 
+  	//Initialise bitrate = 57.6 kbps (U0BAUD.BAUD_M = 34, U0GCR.BAUD_E = 11)
+  	U0BAUD = 34;
+  	U0GCR = (U0GCR&~U0GCR_BAUD_E) | 11;
+
+  	//Initialise UART protocol (start/stop bit, data bits, parity, etc.):
+
+  	//USART mode = UART (U0CSR.MODE = 1)
+  	U0CSR |= U0CSR_MODE;
+
+  	//Start bit level = low => Idle level = high  (U0UCR.START = 0)
+  	U0UCR &= ~U0UCR_START;
+
+  	//Stop bit level = high (U0UCR.STOP = 1)
+  	U0UCR |= U0UCR_STOP;
+
+  	//Number of stop bits = 1 (U0UCR.SPB = 0)
+  	U0UCR &= ~U0UCR_SPB;
+
+  	//Parity = disabled (U0UCR.PARITY = 0)
+  	U0UCR &= ~U0UCR_PARITY;
+
+  	//9-bit data enable = 8 bits transfer (U0UCR.BIT9 = 0)
+  	U0UCR &= ~U0UCR_BIT9;
+
+  	//Level of bit 9 = 0 (U0UCR.D9 = 0), used when U0UCR.BIT9 = 1
+  	//Level of bit 9 = 1 (U0UCR.D9 = 1), used when U0UCR.BIT9 = 1
+  	//Parity = Even (U0UCR.D9 = 0), used when U0UCR.PARITY = 1
+  	//Parity = Odd (U0UCR.D9 = 1), used when U0UCR.PARITY = 1
+  	U0UCR &= ~U0UCR_D9;
+
+  	//Flow control = disabled (U0UCR.FLOW = 0)
+  	U0UCR &= ~U0UCR_FLOW;
+
+  	//Bit order = LSB first (U0GCR.ORDER = 0)
+  	U0GCR &= ~U0GCR_ORDER;
+	
 	while(1)
 	{	
-				
+		P1_0 = 0;
+		for(index = 0; index < 255; index++)
+		{
+			U0DBUF = 0xF0;
+			while(!UTX0IF);
+			UTX0IF = 0;
+		}
+		P1_0 = 1;
 	}
 	
 }
@@ -223,8 +247,9 @@ Data_Frame* decomm_Radio_Packet(Radio_Frame *frame)
 *	This ISR clears the DMAIRQ flag for the channel which completed its
 *	transfer and generated the interrupted request.
 *********************************************************************************/	
-void DMA_ISR(void) __interrupt (8)
+/*void DMA_ISR(void) __interrupt (8)
 {
+	P1_0 = 0;
 	//Clear CPU DMA interrupt flag
 	IRCON &= ~0x01;
 
@@ -232,29 +257,35 @@ void DMA_ISR(void) __interrupt (8)
 	if(DMAIRQ & 0x01)
 	{
 		DMAIRQ &= ~0x01;
+		DMAARM |= 0x01;
 	}
 
 	//Clear DMA Channel 1 complete interrupt flag
 	if(DMAIRQ & 0x02)
 	{
 		DMAIRQ &= ~0x02;
+		DMAARM |= 0x01;
 	}
 	
 	//Clear DMA Channel 2 complete interrupt flag
 	if(DMAIRQ & 0x04)
 	{
 		DMAIRQ &= ~0x04;
-	}
+		DMAARM |= 0x01;
+ 	} 
 	
 	//Clear DMA Channel 3 complete interrupt flag
 	if(DMAIRQ & 0x08)
 	{
+	P1_0 = 0;
 		DMAIRQ &= ~0x08;
+		DMAARM |= 0x01;
 	}
 
 	//Clear DMA Channel 4 complete interrupt flag
 	if(DMAIRQ & 0x10)
 	{
 		DMAIRQ &= ~0x10;
+		DMAARM |= 0x01;
 	}
-}
+}*/

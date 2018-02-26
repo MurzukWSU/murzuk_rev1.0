@@ -19,10 +19,10 @@
 *	NONE
 *********************************************************************************/
 void uartStartRxDmaChan(uint8     uartNum,
-	DMA_DESC* uartDmaRxDescr,
-	uint8     uartDmaRxChan,
-	uint8*    uartRxBuf,
-	uint16    uartRxBufSize)
+			DMA_DESC* uartDmaRxDescr,
+			uint8     uartDmaRxChan,
+			uint8*    uartRxBuf,
+			uint16    uartRxBufSize)
 {
 	//Source = UxDBUF, destination = allocated UART RX buffer
 	//Number of DMA byte transfer = UART RX buffer size.
@@ -113,17 +113,19 @@ void uartStartRxDmaChan(uint8     uartNum,
 *********************************************************************************/
 void uartStartTxDmaChan
 (
-	unsigned char uartNum,
-	DMA_DESC *uartDmaTxDescr,
-	unsigned char uartDmaTxChan,
-	unsigned char* uartTxBuf,
-	uint16 uartTxBufSize
+	uint8     uartNum,
+	DMA_DESC* uartDmaTxDescr,
+	uint8     uartDmaTxChan,
+	uint8*    uartTxBuf,
+	uint16    uartTxBufSize
 )
 {
+	P1_0 = 0;
+
 	// Source = allocated UART TX buffer, destination = UxDBUF 
 	// Number of DMA byte transfers = UART TX buffer size. 
-	uartDmaTxDescr->SRCADDRH = (uint16)(uartTxBuf + 1) >> 8;
-	uartDmaTxDescr->SRCADDRL = (uint16)(uartTxBuf + 1);
+	uartDmaTxDescr->SRCADDRH = 0xF3;//(uint16)(uartTxBuf + 1) >> 8;
+	uartDmaTxDescr->SRCADDRL = 0x01;//(uint16)(uartTxBuf + 1);
 	uartDmaTxDescr->DESTADDRH = 0xDF;
 	uartDmaTxDescr->DESTADDRL = (uartNum == 0) ? 0xC1 : 0xF9;
 	uartDmaTxDescr->LENH = ((uartTxBufSize - 1) >> 8) & 0xFF;
@@ -150,13 +152,13 @@ void uartStartTxDmaChan
 	// Link DMA descriptor with its corresponding DMA configuration register. 
 	if (uartDmaTxChan <1)
 	{
-		DMA0CFGH = (unsigned char)((uint16)uartDmaTxDescr >> 8);
-		DMA0CFGL = (unsigned char)((uint16)uartDmaTxDescr & 0x00FF);
+		DMA0CFGH = (uint8)((uint16)uartDmaTxDescr >> 8);
+		DMA0CFGL = (uint8)((uint16)uartDmaTxDescr & 0x00FF);
 	}
 	else
 	{
-		DMA1CFGH = (unsigned char)((uint16)uartDmaTxDescr >> 8);
-		DMA1CFGL = (unsigned char)((uint16)uartDmaTxDescr & 0x00FF);
+		DMA1CFGH = (uint8)((uint16)uartDmaTxDescr >> 8);
+		DMA1CFGL = (uint8)((uint16)uartDmaTxDescr & 0x00FF);
 	}
 	// Arm DMA channel and apply 45 NOP's for loading DMA configuration 
 	DMAARM = ((1 << uartDmaTxChan) & 0x1F);

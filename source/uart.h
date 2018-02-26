@@ -4,8 +4,8 @@
 #include "cc1110.h"
 #include "DataTypes.h"
 
-#define SIZE_OF_UART_RX_BUFFER 275
-#define SIZE_OF_UART_TX_BUFFER 275
+#define SIZE_OF_UART_RX_BUFFER 50
+#define SIZE_OF_UART_TX_BUFFER 50
 #define UART_RX_BUFFER_ADDR    0xF000
 #define UART_TX_BUFFER_ADDR    0xF100
 #define UART_RX_INDEX_ADDR     0xF500 
@@ -36,7 +36,7 @@ typedef struct UART_PROT_CONFIG
 
 
 //---FUNCTION PROTOTYPES---
-void uartMapPort (uint8 uartPortAlt, uint8 uartNum);
+void uartMapPort(uint8 uartPortAlt, uint8 uartNum);
 void uartInitBitrate(uint8 uartBaudM, uint8 uartBaudE);
 void uartInitProtocol(UART_PROT_CONFIG* uartProtConfig);
 

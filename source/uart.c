@@ -15,8 +15,9 @@
 *********************************************************************************/	
 void uartMapPort(uint8 uartPortAlt, uint8 uartNum)
 {
+
 	//If UART Port Alternative 1 desired
-	if(uartPortAlt == 1)
+/*	if(uartPortAlt == 1)
 	{
 		//If UART0 desired
 		if(uartNum == 0)
@@ -40,32 +41,32 @@ void uartMapPort(uint8 uartPortAlt, uint8 uartNum)
 			//Configure relevant Port P1 pins back to GPIO function
 			P1SEL &= ~0xF0;
 		}
-	}
+	}*/
 	//Else (UART Port Alternative 2 desired
-	else
-	{
+//	else
+//	{
 		
-		if(uartNum == 0)
-		{
+//		if(uartNum == 0)
+//		{
 			//Configure UART0 for Alternative 2 => Port P1 (PERCFG.U0CFG = 1)
 			PERCFG |= 0x01;
 			//P1SEL.SELP1_2/3/4/5 = 1 => CT = P1_2, RT = P1_3, RX = P1_4, TX = P1_5
 			P1SEL |= 0x3C;
 			//Configure relevant Port P0 pins back to GPIO function
 			P0SEL &= ~0x3C;
-		}
+//		}
 		//Else (UART1 desired)
-		else
-		{
+//		else
+//		{
 			//Configure UART1 for Alternative 2 => PORT P1 (PERCFG.U1CFG = 1)
-			PERCFG |= 0x02;
+//			PERCFG |= 0x02;
 			//Configure relevent Port P0 pins for peripheral function:
 			//P1SEL.SELP1_4/5/6/7 = 1 => CT = P1_4, RT = P1_5, TX = P1_6, RX = P1_7
-			P0SEL |= 0xF0;
+//			P1SEL |= 0xF0;
 			//Configure relevant Port P0 pins back to GPIO function
-			P0SEL &= ~0x3C;
-		}
-	}
+//			P0SEL &= ~0x3C;
+//		}
+//	}
 	
 }
 

@@ -35,10 +35,10 @@ echo " "
 
 # Compile source file
 echo "-------------COMPILING-------------"
-sdcc -c ./source/_heap.c -D HEAP_SIZE=8192 --model-large
-sdcc -c ./source/Radio.c --model-large
-sdcc -c ./source/uart.c --model-large
-sdcc -c ./source/dma.c  --model-large
+sdcc -c ./source/_heap.c -D HEAP_SIZE=8192 --debug --model-large
+sdcc -c ./source/Radio.c --debug --model-large
+sdcc -c ./source/uart.c --debug --model-large
+sdcc -c ./source/dma.c  --debug --model-large
 echo "***   Compiling Radio.c"
 echo "***   Compiling uart.c"
 echo "***   Compiling dma.c"
@@ -81,6 +81,14 @@ else
 	echo "!!! ERROR !!! Radio.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
 
+if [ -e "./Radio.adb" ]
+then
+	echo "***   MOVING Radio.adb FILE TO DEBUG DIRECTORY"
+	mv ./Radio.adb $SRC_DIR
+else
+	echo "!!! ERROR !!! Radio.adb FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
 if [ -e "./uart.asm" ] 
 then
 	echo "***   MOVING uart.asm FILE TO SOURCE DIRECTORY"
@@ -112,6 +120,14 @@ then
 else
 	echo "!!! ERROR !!! uart.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
+if [ -e "./uart.adb" ]
+then
+	echo "***   MOVING uart.adb FILE TO DEBUG DIRECTORY"
+	mv ./uart.adb $SRC_DIR
+else
+	echo "!!! ERROR !!! uart.adb FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
 if [ -e "./dma.asm" ] 
 then
 	echo "***   MOVING dma.asm FILE TO SOURCE DIRECTORY"
@@ -143,6 +159,14 @@ then
 else
 	echo "!!! ERROR !!! dma.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
+if [ -e "./dma.adb" ]
+then
+	echo "***   MOVING dma.adb FILE TO DEBUG DIRECTORY"
+	mv ./dma.adb $SRC_DIR
+else
+	echo "!!! ERROR !!! dma.adb FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
+
 if [ -e "./_heap.asm" ] 
 then
 	echo "***   MOVING _heap.asm FILE TO SOURCE DIRECTORY"
@@ -173,13 +197,20 @@ then
 else
 	echo "!!! ERROR !!! _heap.sym FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
+if [ -e "./_heap.adb" ]
+then
+	echo "***   MOVING _heap.adb FILE TO DEBUG DIRECTORY"
+	mv ./_heap.adb $SRC_DIR
+else
+	echo "!!! ERROR !!! _heap.adb FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
+fi
 echo "-----------------------------------"
 echo " "
 
 
 echo "--------LINKING OBJECT FILES-------"
 # Link object files and generate output hex file
-sdcc ./source/Radio.rel ./source/_heap.rel ./source/uart.rel ./source/dma.rel --model-large
+sdcc ./source/Radio.rel ./source/_heap.rel ./source/uart.rel ./source/dma.rel --debug --model-large
 echo "*** Linking Radio.rel"
 echo "*** Linking uart.rel"
 echo "*** Linking dma.rel"
@@ -192,6 +223,7 @@ if [ -e "./Radio.ihx" ]
 then
 	echo "***   MOVING Radio.ihx FILE TO BIN DIRECTORY"
 	mv ./Radio.ihx $BIN_DEST_DIR/Radio.hex
+	mv ./Radio.cdb $SRC_DIR/
 else
 	echo "!!! ERROR !!! Radio.ihx FILE NOT FOUND - CHECK IF COMPILATION WAS SUCCESSFUL"
 fi
