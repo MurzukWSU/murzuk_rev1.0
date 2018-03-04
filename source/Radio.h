@@ -6,7 +6,12 @@
 #include "DataFrame.h"
 #include "DataTypes.h"
 #include "uart.h"
-#include "dma.h"
+
+#define SFSTXON 0x00
+#define SCAL    0x01
+#define SRX     0x02
+#define STX     0x03
+#define SIDLE   0x04
 
 //Define size of RFD TX/RX BUFFERS
 #define SIZE_OF_RFD_RX_BUFFER 282

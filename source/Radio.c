@@ -3,7 +3,6 @@
 #include "Radio.h"
 #include "DataTypes.h"
 #include "uart.h"
-#include "dma.h"
 #include "RadioFrame.h"
 #include "DataFrame.h"
 
@@ -11,8 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//---ISR FUNCTION PROTOTYPES (MUST BE IN RADIO.C)---
-//void DMA_ISR (void) __interrupt (8);
 
 void main(void)
 {
@@ -66,14 +63,9 @@ void main(void)
 	
 	while(1)
 	{	
-		P1_0 = 0;
-		for(index = 0; index < 255; index++)
-		{
-			U0DBUF = 0xF0;
-			while(!UTX0IF);
-			UTX0IF = 0;
-		}
-		P1_0 = 1;
+		U0DBUF = 0x55;
+		while(!UTX0IF);
+		UTX0IF = 0;
 	}
 	
 }
@@ -228,64 +220,3 @@ Data_Frame* decomm_Radio_Packet(Radio_Frame *frame)
 	return dataFrame;	
 }
 
-//This DMA ISR can be used to start a new UART RX session when the previous session
-//(started by the code in uartStartTxDmaChan() or uartStartRxDmaChan()) has completed.
-//For simplicity the code assumes that DMA channel 0 is used, but the functionality
-//is the same for other DMA channels
-
-//The code implements the following steps:
-//1.  Clear the main DMA interrupt Request Flag (IRCON.DMAIF = 0)
-//2.  Start a new UART RX session on the applied DMA channel
-//2a. Clear applied DMA Channel Interrupt Request Flag (DMAIRQ.DMAIFx = 0)
-//2b. Re-arm applied DMA Channel (DMAARM.DMAARMx = 1);
-
-
-/********************************************************************************
-*---INTERRUPT SERVICE ROUTINE---
-* Name: DMA_ISR()
-* Description:
-*	This ISR clears the DMAIRQ flag for the channel which completed its
-*	transfer and generated the interrupted request.
-*********************************************************************************/	
-/*void DMA_ISR(void) __interrupt (8)
-{
-	P1_0 = 0;
-	//Clear CPU DMA interrupt flag
-	IRCON &= ~0x01;
-
-	//Clear DMA Channel 0 complete interrupt flag
-	if(DMAIRQ & 0x01)
-	{
-		DMAIRQ &= ~0x01;
-		DMAARM |= 0x01;
-	}
-
-	//Clear DMA Channel 1 complete interrupt flag
-	if(DMAIRQ & 0x02)
-	{
-		DMAIRQ &= ~0x02;
-		DMAARM |= 0x01;
-	}
-	
-	//Clear DMA Channel 2 complete interrupt flag
-	if(DMAIRQ & 0x04)
-	{
-		DMAIRQ &= ~0x04;
-		DMAARM |= 0x01;
- 	} 
-	
-	//Clear DMA Channel 3 complete interrupt flag
-	if(DMAIRQ & 0x08)
-	{
-	P1_0 = 0;
-		DMAIRQ &= ~0x08;
-		DMAARM |= 0x01;
-	}
-
-	//Clear DMA Channel 4 complete interrupt flag
-	if(DMAIRQ & 0x10)
-	{
-		DMAIRQ &= ~0x10;
-		DMAARM |= 0x01;
-	}
-}*/
